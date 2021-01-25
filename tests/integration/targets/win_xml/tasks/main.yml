@@ -45,6 +45,33 @@
     that:
     - not element_add_result_second is changed
 
+- name: copy a server.xml file
+  ansible.windows.win_copy:
+    src: server.xml
+    dest: "{{ remote_tmp_dir }}\\server.xml"
+
+- name: add an attribute that to httpEndpoint host
+  win_xml:
+    path: "{{ remote_tmp_dir }}\\server.xml"
+    xpath: '//server/httpEndpoint'
+    type: attribute
+    attribute: host
+    fragment: "*"
+
+- name: Try to add an attribute again
+  win_xml:
+    path: "{{ remote_tmp_dir }}\\server.xml"
+    xpath: '//server/httpEndpoint'
+    type: attribute
+    attribute: host
+    fragment: "*"
+  register: attribute_add_result
+
+- name: check attribute add result
+  assert:
+    that:
+    - attribute_add_result is not changed
+
 - name: copy a test log4j.xml
   ansible.windows.win_copy:
     src: log4j.xml
@@ -168,7 +195,7 @@
     fragment: debug
     count: yes
   register: logger_level_value_attrs
- 
+
 - name: verify //logger/level value attributes
   assert:
     that:
@@ -185,7 +212,7 @@
     fragment: debug
     count: yes
   register: logger_level_value_attrs_again
- 
+
 - name: verify //logger/level value attributes again (idempotency)
   assert:
     that:
@@ -231,7 +258,7 @@
       - multi_text_again.count == 5
       - multi_text_again.msg == 'not changed'
 
-# multiple element 
+# multiple element
 
 #- name: ensure a fresh test books.xml is present
 #  ansible.windows.win_copy:
