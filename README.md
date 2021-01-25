@@ -1,6 +1,6 @@
 # Ansible Collection: community.windows
 
-[![Run Status](https://api.shippable.com/projects/5e6068ebe4b17a000756145d/badge?branch=main)](https://app.shippable.com/github/ansible-collections/community.windows/dashboard/jobs)
+[![Build Status](https://dev.azure.com/ansible/community.windows/_apis/build/status/CI?branchName=main)](https://dev.azure.com/ansible/community.windows/_build/latest?definitionId=23&branchName=main)
 [![codecov](https://codecov.io/gh/ansible-collections/community.windows/branch/main/graph/badge.svg)](https://codecov.io/gh/ansible-collections/community.windows)
 
 
@@ -68,6 +68,7 @@ Name | Description
 [community.windows.win_lineinfile](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_lineinfile_module.rst)|Ensure a particular line is in a file, or replace an existing line using a back-referenced regular expression
 [community.windows.win_mapped_drive](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_mapped_drive_module.rst)|Map network drives for users
 [community.windows.win_msg](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_msg_module.rst)|Sends a message to logged in users on Windows hosts
+[community.windows.win_net_adapter_feature](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_net_adapter_feature_module.rst)|Enable or disable certain network adapters.
 [community.windows.win_netbios](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_netbios_module.rst)|Manage NetBIOS over TCP/IP settings on Windows.
 [community.windows.win_nssm](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_nssm_module.rst)|Install a service using NSSM
 [community.windows.win_pagefile](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_pagefile_module.rst)|Query or change pagefile configuration
@@ -95,6 +96,7 @@ Name | Description
 [community.windows.win_scheduled_task](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_scheduled_task_module.rst)|Manage scheduled tasks
 [community.windows.win_scheduled_task_stat](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_scheduled_task_stat_module.rst)|Get information about Windows Scheduled Tasks
 [community.windows.win_scoop](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_scoop_module.rst)|Manage packages using Scoop
+[community.windows.win_scoop_bucket](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_scoop_bucket_module.rst)|Manage Scoop buckets
 [community.windows.win_security_policy](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_security_policy_module.rst)|Change local security policy settings
 [community.windows.win_shortcut](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_shortcut_module.rst)|Manage shortcuts on Windows
 [community.windows.win_snmp](https://github.com/ansible-collections/community.windows/blob/main/docs/community.windows.win_snmp_module.rst)|Configures the Windows SNMP service
@@ -180,7 +182,8 @@ The current process for publishing new versions of the Windows Community Collect
 * Rebuild the plugin docs:
     ```bash
     git clone https://github.com/ansible-network/collection_prep.git /tmp/collection_prep
-    python /tmp/collection_prep/add_docs.py --path ./ --branch-name main
+    pip install /tmp/collection_prep
+    collection_prep_add_docs --path ./ --branch-name main
     rm -rf /tmp/collection_prep
     ```
 * Update the `CHANGELOG`:

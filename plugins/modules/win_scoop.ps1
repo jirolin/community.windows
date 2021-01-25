@@ -35,6 +35,9 @@ $state = $module.Params.state
 $module.Result.rc = 0
 
 function Install-Scoop {
+  [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '', Justification='This is one use case where we want to use iex')]
+  [CmdletBinding()]
+  param ()
 
   # Scoop doesn't have refreshenv like Chocolatey
   # Let's try to update PATH first
@@ -43,26 +46,24 @@ function Install-Scoop {
   $scoop_app = Get-Command -Name scoop.ps1 -Type ExternalScript -ErrorAction SilentlyContinue
   if ($null -eq $scoop_app) {
     # We need to install scoop
-    # Enable TLS1.2 if it's available but disabled (eg. .NET 4.5)
-    $security_protocols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
-    if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
-      $security_protocols = $security_protcols -bor [Net.SecurityProtocolType]::Tls12
-    }
-    [Net.ServicePointManager]::SecurityProtocol = $security_protocols
+    # We run this in a separate process to make it easier to get the result in a failure and capture any output that
+    # might be sent to the host. We also need to enable TLS 1.2 in that process and not here so it can download the
+    # install script and other components.
+    $install_script = {
+      # Enable TLS1.2 if it's available but disabled (eg. .NET 4.5)
+      $security_protocols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
+      if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
+        $security_protocols = $security_protcols -bor [Net.SecurityProtocolType]::Tls12
+      }
+      [Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
-    $client = New-Object -TypeName System.Net.WebClient
-
-    $script_url = "https://get.scoop.sh"
-
-    try {
-      $install_script = $client.DownloadString($script_url)
-    }
-    catch {
-      $module.FailJson("Failed to download Scoop script from '$script_url'; $($_.Exception.Message)", $_)
+      Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
     }
 
     if (-not $module.CheckMode) {
-      $res = Run-Command -Command "powershell.exe -" -stdin $install_script -environment $environment
+      $enc_command = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($install_script.ToString()))
+      $cmd = "powershell.exe -NoProfile -NoLogo -EncodedCommand $enc_command"
+      $res = Run-Command -Command $cmd -environment $environment
       if ($res.rc -ne 0) {
         $module.Result.rc = $res.rc
         $module.Result.stdout = $res.stdout
@@ -109,12 +110,14 @@ function Get-ScoopPackages {
   }
 
   $res.stdout -split "`n" |
-  Select-String '(.*?) \(v:(.*?)\) \[(.*?)\]' |
+  Select-String '(.*?) \(v:(.*?)\)( \*global\*)? \[(.*?)\](\{32bit\})?' |
   ForEach-Object {
     [PSCustomObject]@{
       Package = $_.Matches[0].Groups[1].Value
       Version = $_.Matches[0].Groups[2].Value
-      Bucket  = $_.Matches[0].Groups[3].Value
+      Global  = -not ([string]::IsNullOrWhiteSpace($_.Matches[0].Groups[3].Value))
+      Bucket  = $_.Matches[0].Groups[4].Value
+      x86     = -not ([string]::IsNullOrWhiteSpace($_.Matches[0].Groups[5].Value))
     }
   }
 }
@@ -175,7 +178,7 @@ function Install-ScoopPackage {
 function Get-UninstallScoopPackageArguments {
   $arguments = [System.Collections.Generic.List[String]]@()
 
-  if ($independent) {
+  if ($global) {
     $arguments.Add("--global")
   }
   if ($purge) {
@@ -223,17 +226,24 @@ function Uninstall-ScoopPackage {
 
 $scoop_path = Install-Scoop
 
-$installed_packages = Get-ScoopPackages -scoop_path $scoop_path
+$installed_packages = @(Get-ScoopPackages -scoop_path $scoop_path)
 
 if ($state -in @("absent")) {
   # Always attempt uninstall
-  # Packages can be in a broken state where they don't appear scoop export
+  # Packages can be in a broken state where they don't in appear scoop export
   Uninstall-ScoopPackage -scoop_path $scoop_path -packages $name
 }
 
 if ($state -in @("present")) {
   $missing_packages = foreach ($package in $name) {
-    if ($installed_packages.Package -notcontains $package) {
+    if (
+      ($installed_packages.Package -notcontains $package) -or
+      (($installed_packages.Package -contains $package) -and (
+          ((($installed_packages | Where-Object { $_.Package -eq $package }).Global -contains $true) -and -not $global) -or
+          ((($installed_packages | Where-Object { $_.Package -eq $package }).Global -notcontains $true) -and $global)
+        )
+      )
+    ) {
       $package
     }
   }

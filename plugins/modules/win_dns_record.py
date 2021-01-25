@@ -19,6 +19,20 @@ options:
     - The name of the record.
     required: yes
     type: str
+  port:
+    description:
+    - The port number of the record.
+    - Required when C(type=SRV).
+    - Supported only for C(type=SRV).
+    type: int
+    version_added: 1.0.0
+  priority:
+    description:
+    - The priority number for each service in SRV record.
+    - Required when C(type=SRV).
+    - Supported only for C(type=SRV).
+    type: int
+    version_added: 1.0.0
   state:
     description:
     - Whether the record should exist or not.
@@ -37,16 +51,26 @@ options:
   type:
     description:
     - The type of DNS record to manage.
-    choices: [ A, AAAA, CNAME, PTR ]
+    - C(SRV) was added in the 1.0.0 release of this collection.
+    - C(NS) was added in the 1.1.0 release of this collection.
+    choices: [ A, AAAA, CNAME, NS, PTR, SRV ]
     required: yes
     type: str
   value:
     description:
     - The value(s) to specify. Required when C(state=present).
     - When C(type=PTR) only the partial part of the IP should be given.
+    - Multiple values can be passed when C(type=NS)
     aliases: [ values ]
     type: list
     elements: str
+  weight:
+    description:
+    - Weightage given to each service record in SRV record.
+    - Required when C(type=SRV).
+    - Supported only for C(type=SRV).
+    type: int
+    version_added: 1.0.0
   zone:
     description:
     - The name of the zone to manage (eg C(example.com)).
@@ -117,6 +141,33 @@ EXAMPLES = r'''
     values:
       - 10.0.42.5  # this old value was kept (others removed)
       - 10.0.42.12  # this new value was added
+    zone: "example.com"
+
+# Demonstrate creating a SRV record
+
+- name: Creating a SRV record with port number and priority
+  community.windows.win_dns_record:
+    name: "test"
+    priority: 5
+    port: 995
+    state: present
+    type: "SRV"
+    weight: 2
+    value: "amer.example.com"
+    zone: "example.com"
+
+# Demonstrate creating a NS record with multiple values
+
+- name: Creating NS record
+  community.windows.win_dns_record:
+    name: "ansible.prog"
+    state: present
+    type: "NS"
+    values:
+      - 10.0.0.1
+      - 10.0.0.2
+      - 10.0.0.3
+      - 10.0.0.4
     zone: "example.com"
 '''
 

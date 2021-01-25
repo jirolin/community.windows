@@ -5,6 +5,73 @@ Community Windows Release Notes
 .. contents:: Topics
 
 
+v1.2.0
+======
+
+Release Summary
+---------------
+
+- Release summary for v1.2.0
+
+Minor Changes
+-------------
+
+- win_nssm - added new parameter 'app_environment' for managing service environment.
+- win_scheduled_task - validate task name against invalid characters (https://github.com/ansible-collections/community.windows/pull/168)
+- win_scheduled_task_stat - add check mode support (https://github.com/ansible-collections/community.windows/pull/167)
+
+Bugfixes
+--------
+
+- win_partition - fix size comparison errors when size specified in bytes (https://github.com/ansible-collections/community.windows/pull/159)
+- win_security_policy - read config file with correct encoding to avoid breaking non-ASCII chars
+- win_security_policy - strip of null char added by secedit for ``LegalNoticeText`` so the existing value is preserved
+
+New Modules
+-----------
+
+- win_net_adapter_feature - Enable or disable certain network adapters.
+
+v1.1.0
+======
+
+Minor Changes
+-------------
+
+- win_dns_record - Support NS record creation,modification and deletion
+- win_firewall - Support defining the default inbound and outbound action of traffic in Windows firewall.
+- win_psrepository - Added the ``proxy`` option that defines the proxy to use for the repository being managed
+
+v1.0.0
+======
+
+Minor Changes
+-------------
+
+- win_dns_record - Added support for managing ``SRV`` records
+- win_firewall_rule - Support editing rules by the group it belongs to
+- win_firewall_rule - Support editing rules that have a duplicated name
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- win_pester - no longer runs all ``*.ps1`` file in the directory specified due to it executing potentially unknown scripts. It will follow the default behaviour of only running tests for files that are like ``*.tests.ps1`` which is built into Pester itself.
+
+Removed Features (previously deprecated)
+----------------------------------------
+
+- win_psexec - removed the deprecated ``extra_opts`` option.
+
+Bugfixes
+--------
+
+- win_scoop - add checks for globally installed packages for better idempotency checks
+
+New Modules
+-----------
+
+- win_scoop_bucket - Manage Scoop buckets
+
 v0.2.0
 ======
 
